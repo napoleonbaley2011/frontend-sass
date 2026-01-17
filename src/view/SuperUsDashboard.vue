@@ -1,261 +1,439 @@
 <template>
-  <div class="superuser-dashboard-container">
-    <!-- Barra lateral -->
+  <div class="dashboard-container">
+
+    <!-- SIDEBAR -->
     <aside class="sidebar">
-      <div class="sidebar-header">
-        <i class="fas fa-cogs"></i>
-        <span class="sidebar-title">DASHBOARD DE SUPERVISOR</span>
-      </div>
-      <nav class="sidebar-nav">
-        <ul>
-          <li @click="changeSection('users')">Usuarios</li>
-          <li @click="changeSection('microempresa')">Microempresas</li>
-          <li @click="changeSection('subscriptions')">Planes y Suscripciones</li>
-        </ul>
-      </nav>
+      <h2 class="logo">Microempresario</h2>
+
+      <ul>
+        <li @click="changeSection('perfil')">
+          <i class="fas fa-user"></i> Mi Perfil
+        </li>
+
+        <li @click="changeSection('productos')">
+          <i class="fas fa-box"></i> Productos
+        </li>
+
+        <li @click="changeSection('ventas')">
+          <i class="fas fa-shopping-cart"></i> Ventas
+        </li>
+
+        <li @click="changeSection('vendedores')">
+          <i class="fas fa-users"></i> Vendedores
+        </li>
+
+        <li @click="handleLogout()">
+          <i class="fas fa-sign-out-alt"></i> Cerrar Sesión
+        </li>
+      </ul>
     </aside>
 
-    <!-- Contenido principal -->
-    <main class="main-content">
-      <header class="main-header">
-        <h1>BIENVENIDO, SUPERVISOR</h1>
-        <p>Gestiona los usuarios, microempresas y suscripciones desde aquí.</p>
-      </header>
+    <!-- CONTENIDO -->
+    <main class="content">
 
-      <!-- Sección de Usuarios -->
-      <section v-if="currentSection === 'users'" class="section-users">
-        <h2>Gestión de Usuarios</h2>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Email</th>
-                <th>Rol</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="user in users" :key="user.id">
-                <td>{{ user.name }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.role }}</td>
-                <td>
-                  <span :class="user.status === 'active' ? 'status-active' : 'status-inactive'">
-                    {{ user.status }}
-                  </span>
-                </td>
-                <td>
-                  <button @click="toggleUserStatus(user)" class="btn-action">
-                    <i class="fas" :class="user.status === 'active' ? 'fa-toggle-off' : 'fa-toggle-on'"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <!-- PERFIL -->
+      <section v-if="currentSection === 'perfil'">
+        <h2>Mi Perfil</h2>
+        <p><strong>Empresa:</strong> {{ empresa.nombre }}</p>
+        <p><strong>Plan actual:</strong> {{ empresa.plan }}</p>
+        <p><strong>Estado:</strong> {{ empresa.estado }}</p>
+
+        <button class="btn-primary">
+          <i class="fas fa-credit-card"></i> Renovar / Cambiar Plan
+        </button>
       </section>
 
-      <!-- Sección de Microempresas -->
-      <section v-if="currentSection === 'microempresa'" class="section-microempresa">
-        <h2>Gestión de Microempresas</h2>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre de Empresa</th>
-                <th>Email de Contacto</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="empresa in empresas" :key="empresa.id">
-                <td>{{ empresa.name }}</td>
-                <td>{{ empresa.contactEmail }}</td>
-                <td>
-                  <span :class="empresa.status === 'active' ? 'status-active' : 'status-inactive'">
-                    {{ empresa.status }}
-                  </span>
-                </td>
-                <td>
-                  <button @click="toggleEmpresaStatus(empresa)" class="btn-action">
-                    <i class="fas" :class="empresa.status === 'active' ? 'fa-toggle-off' : 'fa-toggle-on'"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <!-- PRODUCTOS -->
+      <section v-if="currentSection === 'productos'">
+        <div class="header-productos">
+          <h2>Mis Productos</h2>
+
+          <div class="acciones">
+            <select v-model="filtroEstado">
+              <option value="todos">Todos</option>
+              <option value="activos">Habilitados</option>
+              <option value="inactivos">Deshabilitados</option>
+            </select>
+
+            <button class="btn-primary" @click="mostrarModal = true">
+              <i class="fas fa-plus"></i> Añadir Producto
+            </button>
+          </div>
         </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Precio Unitario</th>
+              <th>Stock</th>
+              <th>Unidades</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr v-if="productosFiltrados.length === 0">
+              <td colspan="6" class="tabla-vacia">
+                No hay productos registrados
+              </td>
+            </tr>
+
+            <tr v-for="p in productosFiltrados" :key="p.id">
+              <td>{{ p.nombre_producto }}</td>
+              <td>{{ p.precio_unitario }} Bs</td>
+              <td>{{ p.stock }}</td>
+              <td>{{ p.unidades }}</td>
+              <td>
+                <span :class="p.activo ? 'activo' : 'inactivo'">
+                  {{ p.activo ? 'Habilitado' : 'Deshabilitado' }}
+                </span>
+              </td>
+              <td class="acciones-tabla">
+                <button @click="toggleProducto(p)">
+                  <i class="fas fa-power-off"></i>
+                </button>
+                <button @click="deleteProducto(p.id)">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </section>
 
-      <!-- Sección de Planes y Suscripciones -->
-      <section v-if="currentSection === 'subscriptions'" class="section-subscriptions">
-        <h2>Gestión de Planes y Suscripciones</h2>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th>Plan</th>
-                <th>Precio</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="plan in plans" :key="plan.id">
-                <td>{{ plan.name }}</td>
-                <td>{{ plan.price }} Bs</td>
-                <td>
-                  <span :class="plan.status === 'active' ? 'status-active' : 'status-inactive'">
-                    {{ plan.status }}
-                  </span>
-                </td>
-                <td>
-                  <button @click="togglePlanStatus(plan)" class="btn-action">
-                    <i class="fas" :class="plan.status === 'active' ? 'fa-toggle-off' : 'fa-toggle-on'"></i>
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      <!-- MODAL PRODUCTOS -->
+      <div v-if="mostrarModal" class="modal-overlay">
+        <div class="modal">
+          <h3>Nuevo Producto</h3>
+
+          <form @submit.prevent="addProduct" class="form-modern">
+
+  <div class="form-group">
+    <label>Nombre del producto</label>
+    <input
+      v-model="newProduct.nombre_producto"
+      type="text"
+      required
+    />
+  </div>
+
+  <div class="form-row">
+    <div class="form-group">
+      <label>Precio unitario (Bs)</label>
+      <input
+        type="number"
+        v-model="newProduct.precio_unitario"
+        required
+        min="0"
+      />
+    </div>
+    
+    <div class="form-group">
+      <label>Stock</label>
+      <input
+        type="number"
+        v-model="newProduct.stock"
+        required
+        min="0"
+      />
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Unidades</label>
+    <input
+      v-model="newProduct.unidades"
+      placeholder="Ej: kg, unidades, cajas"
+      required
+    />
+  </div>
+
+  <div class="form-group">
+    <label>Descripción</label>
+    <textarea
+      v-model="newProduct.descripcion"
+      rows="3"
+    ></textarea>
+  </div>
+
+  <div class="modal-actions">
+    <button type="button" class="btn-cancelar" @click="cerrarModal">
+      Cancelar
+    </button>
+    <button type="submit" class="btn-primary">
+      Añadir Producto
+    </button>
+  </div>
+
+</form>
+
         </div>
+      </div>
+
+      <!-- VENTAS -->
+      <section v-if="currentSection === 'ventas'">
+        <h2>Historial de Ventas</h2>
       </section>
+
+      <!-- VENDEDORES -->
+      <section v-if="currentSection === 'vendedores'">
+        <h2>Gestión de Vendedores</h2>
+      </section>
+
     </main>
   </div>
 </template>
 
 <script>
+import axios from 'axios';
 export default {
   data() {
     return {
-      currentSection: 'users', // Controla la sección actual
-      users: [
-        { id: 1, name: 'Juan Pérez', email: 'juan@example.com', role: 'Vendedor', status: 'active' },
-        { id: 2, name: 'Ana Gómez', email: 'ana@example.com', role: 'Vendedor', status: 'inactive' }
-      ],
-      empresas: [
-        { id: 1, name: 'Empresa 1', contactEmail: 'empresa1@example.com', status: 'active' },
-        { id: 2, name: 'Empresa 2', contactEmail: 'empresa2@example.com', status: 'inactive' }
-      ],
-      plans: [
-        { id: 1, name: 'Básico', price: 70, status: 'active' },
-        { id: 2, name: 'Premium', price: 150, status: 'inactive' }
-      ]
+      currentSection: 'perfil',
+      mostrarModal: false,
+      filtroEstado: 'todos',
+
+      empresa: {
+        nombre: '',
+        plan: '',
+        estado: ''
+      },
+
+      productos: [],
+
+      newProduct: {
+        nombre_producto: '',
+        precio_unitario: '',
+        stock: '',
+        unidades: '',
+        descripcion: ''
+      }
     };
   },
+
+  computed: {
+    productosFiltrados() {
+      if (this.filtroEstado === 'activos') {
+        return this.productos.filter(p => p.activo);
+      }
+      if (this.filtroEstado === 'inactivos') {
+        return this.productos.filter(p => !p.activo);
+      }
+      return this.productos;
+    }
+  },
+
   methods: {
     changeSection(section) {
       this.currentSection = section;
     },
-    toggleUserStatus(user) {
-      user.status = user.status === 'active' ? 'inactive' : 'active';
+
+    addProduct() {
+      this.productos.push({
+        id: Date.now(),
+        ...this.newProduct,
+        activo: true
+      });
+      this.cerrarModal();
     },
-    toggleEmpresaStatus(empresa) {
-      empresa.status = empresa.status === 'active' ? 'inactive' : 'active';
+
+    cerrarModal() {
+      this.mostrarModal = false;
+      this.newProduct = {
+        nombre_producto: '',
+        precio_unitario: '',
+        stock: '',
+        unidades: '',
+        descripcion: ''
+      };
     },
-    togglePlanStatus(plan) {
-      plan.status = plan.status === 'active' ? 'inactive' : 'active';
+
+    toggleProducto(producto) {
+      producto.activo = !producto.activo;
+    },
+
+    deleteProducto(id) {
+      this.productos = this.productos.filter(p => p.id !== id);
+    },
+
+    async handleLogout() {
+      console.log(localStorage.getItem('auth-token'));
+      try {
+        await axios.post('http://localhost:8000/api/auth/logout', {}, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
+          }
+        });
+        // Eliminar el token de autenticación del almacenamiento local
+        localStorage.removeItem('auth-token');
+        localStorage.removeItem('nombre_completo');
+
+        // Redirigir al usuario a la página de inicio de sesión
+        this.$router.push('/login');
+      } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+      }
     }
   }
 };
 </script>
 
-<style scoped lang="scss">
-.superuser-dashboard-container {
+<style scoped>
+.dashboard-container {
   display: flex;
   height: 100vh;
-
-  .sidebar {
-    width: 250px;
-    background-color: #1f3a64;
-    color: white;
-    padding: 20px;
-    font-size: 16px;
-
-    .sidebar-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 40px;
-      .sidebar-title {
-        margin-left: 10px;
-        font-weight: bold;
-        font-size: 22px;
-        text-transform: uppercase;
-      }
-      i {
-        font-size: 30px;
-      }
-    }
-
-    .sidebar-nav ul {
-      list-style: none;
-      padding: 0;
-      li {
-        margin: 15px 0;
-        cursor: pointer;
-        &:hover {
-          color: #3498db;
-        }
-      }
-    }
-  }
-
-  .main-content {
-    flex-grow: 1;
-    padding: 20px;
-    background-color: #fff;
-
-    h1 {
-      font-size: 36px;
-      color: #333;
-      margin-bottom: 20px;
-    }
-
-    .section-users, .section-microempresa, .section-subscriptions {
-      margin-bottom: 40px;
-
-      h2 {
-        font-size: 28px;
-        margin-bottom: 20px;
-      }
-
-      .table-container {
-        overflow-x: auto;
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          th, td {
-            padding: 10px;
-            border: 1px solid #ddd;
-            text-align: left;
-          }
-        }
-      }
-
-      .status-active {
-        color: green;
-      }
-
-      .status-inactive {
-        color: red;
-      }
-
-      .btn-action {
-        background-color: transparent;
-        border: none;
-        color: #3498db;
-        cursor: pointer;
-        font-size: 20px;
-      }
-
-      .btn-action:hover {
-        color: #1f6392;
-      }
-    }
-  }
 }
+
+.sidebar {
+  width: 240px;
+  background: #1f3a64;
+  color: white;
+  padding: 20px;
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  margin: 15px 0;
+  cursor: pointer;
+}
+
+.content {
+  flex: 1;
+  padding: 20px;
+}
+
+.header-productos {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.acciones {
+  display: flex;
+  gap: 10px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border: 1px solid #ddd;
+  padding: 10px;
+}
+
+.tabla-vacia {
+  text-align: center;
+  color: #777;
+}
+
+.activo {
+  color: green;
+}
+
+.inactivo {
+  color: red;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal {
+  background: white;
+  padding: 20px;
+  width: 400px;
+  border-radius: 8px;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.btn-primary {
+  background: #3498db;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.btn-cancelar {
+  background: #ccc;
+  border: none;
+  padding: 8px 12px;
+}
+.form-modern {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 14px;
+  margin-bottom: 4px;
+  color: #555;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 14px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3498db;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.input-icon {
+  position: relative;
+}
+
+.input-icon i {
+  position: absolute;
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+  color: #999;
+}
+
+.input-icon input {
+  padding-left: 32px;
+}
+
+
 </style>
-
-
