@@ -56,7 +56,7 @@ export default {
     async handleLogin() {
       try {
         // Enviar credenciales al backend para la autenticación
-        const response = await axios.post('https://hs1sbz-ip-190-181-17-18.tunnelmole.net/api/auth/login', {
+        const response = await axios.post('http://localhost:8000/api/auth/login', {
           email: this.username,
           password: this.password,
         });

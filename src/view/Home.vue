@@ -61,7 +61,7 @@ export default {
   methods: {
     async fetchMicroempresas() {
       try {
-        const response = await axios.get('https://hs1sbz-ip-190-181-17-18.tunnelmole.net/api/auth/allMicroempresas');
+        const response = await axios.get('http://localhost:8000/api/micro/allMicroempresas');
         this.microempresas = response.data.microempresas;
       } catch (error) {
         console.error("Error al obtener las microempresas:", error);

@@ -195,7 +195,7 @@ export default {
 
         async handleLogout() {
             try {
-                await axios.post('https://hs1sbz-ip-190-181-17-18.tunnelmole.net/api/auth/logout', {}, {
+                await axios.post('http://localhost:8000/api/auth/logout', {}, {
                     headers: {
                         'Authorization': `Bearer ${localStorage.getItem('auth-token')}`,
                     }
